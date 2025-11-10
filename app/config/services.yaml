@@ -1,0 +1,71 @@
+parameters:
+  sphinx.host: '%env(SPHINX_HOST)%'
+  sphinx.port: '%env(int:SPHINX_PORT)%'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+      $sphinxHost: '%sphinx.host%'
+      $sphinxPort: '%sphinx.port%'
+
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/Domain/Entity/'
+      - '../src/Kernel.php'
+
+  # Repositories
+  App\Domain\Repository\CustomerRepositoryInterface:
+    alias: App\Infrastructure\Persistence\Doctrine\Repository\CustomerRepository
+
+  App\Domain\Repository\ProductRepositoryInterface:
+    alias: App\Infrastructure\Persistence\Doctrine\Repository\ProductRepository
+
+  App\Domain\Repository\OrderRepositoryInterface:
+    alias: App\Infrastructure\Persistence\Doctrine\Repository\OrderRepository
+
+  App\Domain\Repository\OrderItemRepositoryInterface:
+    alias: App\Infrastructure\Persistence\Doctrine\Repository\OrderItemRepository
+
+  App\Domain\Repository\ProductReviewRepositoryInterface:
+    alias: App\Infrastructure\Persistence\Doctrine\Repository\ProductReviewRepository
+
+  # Doctrine Repositories
+  App\Infrastructure\Persistence\Doctrine\Repository\CustomerRepository:
+    tags: ['doctrine.repository_service']
+
+  App\Infrastructure\Persistence\Doctrine\Repository\ProductRepository:
+    tags: ['doctrine.repository_service']
+
+  App\Infrastructure\Persistence\Doctrine\Repository\OrderRepository:
+    tags: ['doctrine.repository_service']
+
+  App\Infrastructure\Persistence\Doctrine\Repository\OrderItemRepository:
+    tags: ['doctrine.repository_service']
+
+  App\Infrastructure\Persistence\Doctrine\Repository\ProductReviewRepository:
+    tags: ['doctrine.repository_service']
+
+  App\Infrastructure\Search\MariaDbSearchService:
+    tags: ['app.search_service']
+
+  App\Infrastructure\Search\SphinxSearchService:
+    tags: ['app.search_service']
+
+  App\Infrastructure\Search\SphinxConnection:
+    arguments:
+      $connection: '@doctrine.dbal.sphinx_connection'
+
+  App\Domain\Service\BenchmarkService:
+    arguments:
+      $searchServices: !tagged_iterator app.search_service
+
+  App\Domain\Service\DataGeneratorService: ~
+
+  App\Infrastructure\Console\GenerateDataCommand:
+    tags: [ 'console.command' ]
+
+  App\Infrastructure\Console\BenchmarkCommand:
+    tags: [ 'console.command' ]
